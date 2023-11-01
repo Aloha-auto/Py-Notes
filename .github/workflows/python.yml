@@ -7,9 +7,10 @@ env:
   subject: ${{ secrets.subject }}
   test_subject: ${{ secrets.test_subject }}
 
-on: [push, workflow_dispatch]
-  #schedule: 
-   # - cron: '0/15 * * * *'
+on:
+  schedule: 
+    - cron: '0/15 7-20 * 9-12,1-7 *'
+    - cron: '0/30 21-23,0-6 * 9-12,1-7 *'
 
 
 jobs:
