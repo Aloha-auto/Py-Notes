@@ -15,7 +15,7 @@ on:
 
 jobs:
 
-  build:
+  update:
 
     runs-on: ubuntu-latest
 
