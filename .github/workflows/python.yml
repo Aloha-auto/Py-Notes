@@ -1,19 +1,22 @@
 name: Run Python
-
+env: 
+  USER: ${{ secrets.USER }}
+  PASS: ${{ secrets.PASS }}
+  URL: ${{ secrets.URL }}
+  API_KEY: ${{ secrets.API_KEY }}
+  subject: ${{ secrets.subject }}
+  test_subject: ${{ secrets.test_subject }}
 
 on: [push, workflow_dispatch]
   #schedule: 
    # - cron: '0/15 * * * *'
 
 
-
 jobs:
 
   build:
 
-
     runs-on: ubuntu-latest
-
 
     steps:
     - uses: actions/checkout@v3
