@@ -17,6 +17,7 @@ USER = os.environ['USER'] #mondossierweb
 PASS = os.environ['PASS'] #mondossierweb
 URL = os.environ['URL'] #jsonbin
 API_KEY = os.environ['API_KEY'] #jsonbin
+PDF_URL = os.environ['PDF_URL'] #custom
 subject = os.environ['subject'] #ntfy Notes
 test_subject = os.environ['test_subject'] #ntfy test
 
@@ -27,6 +28,7 @@ firefox_options.add_argument("-headless")
 
 display = False
 file = True
+pdf = True
 
 ### INIT
 driver = webdriver.Firefox(options=firefox_options)
@@ -149,4 +151,7 @@ if dic != old :
         if int(el["new"]) >= 12 : tag = "green_book"
         elif int(el["new"]) >= 9 : tag = "blue_book"
         else : tag = "orange_book"
-        requests.post(f"https://ntfy.sh/{subject}", data=f"{el['matiere']} : {el['new']}", headers={"Title": "Nouvelle note", "Tags": tag})
+        if pdf :
+            requests.post(f"https://ntfy.sh/{subject}", data=f"{el['matiere']} : {el['new']}", headers={"Title": "Nouvelle note", "Tags": tag, "Actions": f"view, PDF, {PDF_URL}, clear=true"})
+        else :
+            requests.post(f"https://ntfy.sh/{subject}", data=f"{el['matiere']} : {el['new']}", headers={"Title": "Nouvelle note", "Tags": tag})
