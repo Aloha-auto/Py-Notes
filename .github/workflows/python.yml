@@ -2,29 +2,30 @@ name: Run Python
 env: 
   USER: ${{ secrets.USER }}
   PASS: ${{ secrets.PASS }}
-  URL: ${{ secrets.URL }}
-  API_KEY: ${{ secrets.API_KEY }}
+  FTP_HOST: ${{ secrets.FTP_HOST }}
+  FTP_USER: ${{ secrets.FTP_USER }}
+  FTP_PASS: ${{ secrets.FTP_PASS }}
   PDF_URL: ${{ secrets.PDF_URL }}
   subject: ${{ secrets.subject }}
   test_subject: ${{ secrets.test_subject }}
 
-#on:
-#  schedule: 
-#    - cron: '0/15 7-20 * 9-12,1-7 *'
-#    - cron: '0/30 21-23,0-6 * 9-12,1-7 *'
+on:
+  schedule: 
+    - cron: '0/60 7-20 * 9-12,1-7 *'
+    - cron: '0/120 21-23,0-6 * 9-12,1-7 *'
 
 
-#jobs:
-#
-#  update:
-#
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#    - uses: actions/checkout@v3
-#    - uses: actions/setup-python@v4
-#      with:
-#        python-version: '3.10'
-#        cache: 'pip' # caching pip dependencies
-#    - run: pip install -r requirements.txt
-#    - run: python script.py
+jobs:
+
+  update:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip' # caching pip dependencies
+    - run: pip install -r requirements.txt
+    - run: python script.py
