@@ -5,12 +5,15 @@ Created on Sun Oct  8 15:33:24 2023
 @author: Alois
 """
 
-from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 import time
 import requests
 import json
+import ftplib
 import os
 
 USER = os.environ['USER'] #mondossierweb
