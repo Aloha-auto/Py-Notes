@@ -28,7 +28,7 @@ test_subject = os.environ['test_subject'] #ntfy test
 requests.post(f"https://ntfy.sh/{test_subject}", data="Notes is running")
 
 firefox_options = Options()
-firefox_options.add_argument("-headless")
+# firefox_options.add_argument("-headless")
 
 display = False
 file = True
