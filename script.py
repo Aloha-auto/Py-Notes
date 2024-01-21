@@ -213,8 +213,8 @@ if dic != old:
     d = trouver_differences(old, dic)
     print(d)
     for el in d :
-        if int(el["new"]) >= 12 : tag, news = "green_book", "Cool !"
-        elif int(el["new"]) >= 9 : tag, news = "blue_book", "Ok..."
+        if int(el["new"][note]) >= 12 : tag, news = "green_book", "Cool !"
+        elif int(el["new"][note]) >= 9 : tag, news = "blue_book", "Ok..."
         else : tag, news = "orange_book", "Pas dingue"
         r = requests.post(f"https://ntfy.sh/{subject}", data=f"{news}\n\n\n{el['matiere']} : {el['new']}".encode(encoding='utf-8'), headers={"Title": "Nouvelle note", "Tags": tag, "Priority": "2", "Actions": "view, PDF, {PDF_URL}, clear=true"})
         if r.status_code == "200":
