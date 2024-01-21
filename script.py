@@ -31,7 +31,7 @@ requests.post(f"https://ntfy.sh/{test_subject}", data="Notes is running")
 t1 = time.time()
 
 firefox_options = Options()
-# firefox_options.add_argument("-headless")
+firefox_options.add_argument("-headless")
 
 display = False
 file = True
