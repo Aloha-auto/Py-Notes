@@ -4,7 +4,6 @@ Created on Sun Oct  8 15:33:24 2023
 
 @author: Alois
 """
-
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -16,16 +15,20 @@ import json
 import ftplib
 import os
 
+
 USER = os.environ['USER'] #mondossierweb
 PASS = os.environ['PASS'] #mondossierweb
 FTP_HOST = os.environ['FTP_HOST']
 FTP_USER = os.environ['FTP_USER']
 FTP_PASS = os.environ['FTP_PASS']
+FTP_DIR = os.environ['FTP_DIR']
 PDF_URL = os.environ['PDF_URL'] #custom
 subject = os.environ['subject'] #ntfy Notes
 test_subject = os.environ['test_subject'] #ntfy test
 
 requests.post(f"https://ntfy.sh/{test_subject}", data="Notes is running")
+
+t1 = time.time()
 
 firefox_options = Options()
 # firefox_options.add_argument("-headless")
@@ -63,20 +66,11 @@ driver.get("https://mondossierweb.insa-lyon.fr/mondossierweb/inscriptions?contin
 # button = driver.find_elements(By.TAG_NAME, "vaadin-button")
 time.sleep(5)
 
-# a = input("wait")
-
 buttons = driver.find_elements(By.XPATH, "//vaadin-button[text()='Notes et résultats']")
 # button = driver.find_elements(By.XPATH, "/html/body/vaadin-app-layout/vaadin-vertical-layout[2]/vaadin-vertical-layout/vaadin-vertical-layout[1]/vaadin-vertical-layout/vaadin-vertical-layout/div[2]/div[2]/vaadin-button")
 
 buttons[0].click()
 
-time.sleep(1)
-
-cells = driver.find_elements(By.TAG_NAME, "vaadin-grid-cell-content")
-
-time.sleep(1)
-
-    
 
 
 dic = {}
@@ -84,84 +78,69 @@ dic = {}
 matiere, note, level = None, None, None
  
 passes = set()
+passes_ue = set()
 
+cell_list_1 = []
+cell_list_2 = []
 
-for cell in cells:
-    # print(cell.get_attribute("slot"))
-    if len(cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")) > 0 :
-        matiere, level, note = "", "", None
-        level = cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")[0].value_of_css_property("---level")
-        if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-            matiere = cell.find_elements(By.TAG_NAME, "div")[1].text
-    else :
-        note = None
-        if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-            note = cell.find_elements(By.TAG_NAME, "div")[-1].text
-            if note in {'Aucun résultat', '', None}:
-                note = 'Aucun résultat'
-            else :
-                note = float(note[:-3])
-    if matiere is not None and note is not None:
-        if matiere not in passes :
-            passes.add(matiere)
-            if display :
-                print("Level : " + level + " / Matiere : " + matiere + " / Note : " + str(note))
-            if file :
-                if level == "1":
-                    dic[matiere] = {"level": level, "note": note}
-                    semestre = matiere
-                elif level == "3":
-                    dic[semestre][matiere] = {"level": level, "note": note}
-                    ue = matiere
-                elif level == "4":
-                    dic[semestre][ue][matiere] = {"level": level, "note": note}
-                    ec = matiere
-                elif level == "5":
-                    dic[semestre][ue][ec][matiere] = {"level": level, "note": note}
-
-
-list_element = driver.find_element(By.XPATH, "/html/body/vaadin-dialog-overlay/div/vaadin-vertical-layout/vaadin-grid")
-
-ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
-ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
-ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
-
-time.sleep(2)
-
-cells2 = driver.find_elements(By.TAG_NAME, "vaadin-grid-cell-content")
-
-for cell in cells2:
-    # print(cell.get_attribute("slot"))
-    if len(cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")) > 0 :
-        matiere, level, note = "", "", None
-        level = cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")[0].value_of_css_property("---level")
-        if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-            matiere = cell.find_elements(By.TAG_NAME, "div")[1].text
-    else :
-        note = None
-        if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-            note = cell.find_elements(By.TAG_NAME, "div")[-1].text
-            if note in {'Aucun résultat', '', None}:
-                note = 'Aucun résultat'
-            else :
-                note = float(note[:-3])
-    if matiere is not None and note is not None:
-        if matiere not in passes :
-            passes.add(matiere)
-            if display :
-                print("Level : " + level + " / Matiere : " + matiere + " / Note : " + str(note))
-            if file :
-                if level == "1":
-                    dic[matiere] = {"level": level, "note": note}
-                    semestre = matiere
-                elif level == "3":
-                    dic[semestre][matiere] = {"level": level, "note": note}
-                    ue = matiere
-                elif level == "4":
-                    dic[semestre][ue][matiere] = {"level": level, "note": note}
-                    ec = matiere
-                elif level == "5":
-                    dic[semestre][ue][ec][matiere] = {"level": level, "note": note}
+while cell_list_1 == [] or cell_list_1 != cell_list_2 :
+    cell_list_1 = cell_list_2.copy()
+    cell_list_2 = []
+    
+    time.sleep(1)
+    cells = driver.find_elements(By.TAG_NAME, "vaadin-grid-cell-content")
+    time.sleep(1)
+    
+    for i in range(len(cells)):
+        cell = cells[i]
+        cell_list_2.append(cell.text)
+        if len(cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")) > 0 :
+            matiere, level, note = "", "", None
+            level = cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")[0].value_of_css_property("---level")
+            if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
+                matiere = cell.find_elements(By.TAG_NAME, "div")[1].text
+        else :
+            note = None
+            if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
+                note = cell.find_elements(By.TAG_NAME, "div")[-1].text
+                if note in {'Aucun résultat', '', None}:
+                    note = 'Aucun résultat'
+                else :
+                    note = float(note[:-3])
+        if matiere is not None and note is not None:
+            if matiere not in passes:
+                if display :
+                    print("Level : " + level + " / Matiere : " + matiere + " / Note : " + str(note))
+                if file :
+                    if level == "1": # semestre
+                        passes.add(matiere)
+                        dic[matiere] = {"level": level, "note": note}
+                        semestre = matiere
+                        passes_ue.clear()
+                        if semestre == "2ème semestre" :
+                            passes_ue.add("Physique et Chimie")
+                    elif level == "3" and (matiere not in passes_ue or len(dic[semestre].get(matiere, [])) == 2): # UE
+                        passes_ue.add(matiere)
+                        if semestre in dic.keys():
+                            dic[semestre][matiere] = {"level": level, "note": note}
+                            ue = matiere
+                    elif level == "4": # EC
+                        passes.add(matiere)
+                        if semestre in dic.keys() and ue in dic[semestre].keys():
+                            dic[semestre][ue][matiere] = {"level": level, "note": note}
+                            ec = matiere
+                    elif level == "5": # Eval
+                        passes.add(matiere)
+                        if semestre in dic.keys() and ue in dic[semestre].keys() and ec in dic[semestre][ue].keys():
+                            dic[semestre][ue][ec][matiere] = {"level": level, "note": note}
+                        
+    list_element = driver.find_element(By.XPATH, "/html/body/vaadin-dialog-overlay/div/vaadin-vertical-layout/vaadin-grid")
+    
+    ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
+    ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
+    ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
+    
+    time.sleep(2)
                 
 time.sleep(1)
 driver.close()
@@ -209,13 +188,12 @@ def trouver_differences(dic1, dic2, parent_keys=None):
 
     return differences
 
-
 # connect to the FTP server
 ftp = ftplib.FTP(FTP_HOST, FTP_USER, FTP_PASS)
 # force UTF-8 encoding
 ftp.encoding = "utf-8"
 
-ftp.sendcmd('CWD files.aloha.42web.io/htdocs/protected/')
+ftp.sendcmd(f"CWD {FTP_DIR}")
 
 filename = "notes.json"
 with open(filename, "wb") as file:
@@ -238,8 +216,13 @@ if dic != old:
         if int(el["new"]) >= 12 : tag, news = "green_book", "Cool !"
         elif int(el["new"]) >= 9 : tag, news = "blue_book", "Ok..."
         else : tag, news = "orange_book", "Pas dingue"
-        r = requests.post(f"https://ntfy.sh/{subject}", data=f"{news}\n\n\n{el['matiere']} : {el['new']}".encode(encoding='utf-8'), headers={"Title": "Nouvelle note", "Tags": tag, "Priority": "2", "Actions": "view, PDF, http://files.aloha.42web.io/protected/pdf.php, clear=true"})
+        r = requests.post(f"https://ntfy.sh/{subject}", data=f"{news}\n\n\n{el['matiere']} : {el['new']}".encode(encoding='utf-8'), headers={"Title": "Nouvelle note", "Tags": tag, "Priority": "2", "Actions": "view, PDF, {PDF_URL}, clear=true"})
         if r.status_code == "200":
             print("Notified!")
 else :
     print("no diff")
+
+
+print()
+print("Code ran in ", end="")
+print(time.time() - t1)
