@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Oct  8 15:33:24 2023
+Created on Mon Feb 11 15:04:20 2024
 
 @author: Alois
 """
-from selenium import webdriver
+
 from selenium.webdriver.firefox.options import Options
+from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 import time
 import requests
 import json
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 import ftplib
+import re
 import os
 
 
@@ -26,12 +28,63 @@ PDF_URL = os.environ['PDF_URL'] #custom
 subject = os.environ['subject'] #ntfy Notes
 test_subject = os.environ['test_subject'] #ntfy test
 
+
 requests.post(f"https://ntfy.sh/{test_subject}", data="Notes is running")
+
+
+t1 = time.time()
+
+def merge_lists(list_one, list_two):
+    result = []
+    length = min(len(list_one), len(list_two))
+    for i in range(length):
+        result.append((list_one[i], list_two[i]))
+    return result
+
+def remove_doublons(liste):
+    if liste[-1] == liste[-2]:
+        liste.pop(-1)
+        remove_doublons(liste)
+        
+def remove_beginning_recoverage(end_result):
+    for i in range(1, len(end_result)):
+        stop = False
+        while stop == False:
+            if end_result[i][0] in end_result[i-1]:
+                end_result[i].pop(0)
+            else :
+                stop = True
+                
+def remove_end_recoverage(end_results):
+    for i in range(1, len(end_result)):
+        j = len(end_result[i]) - 1
+        stop = False
+        while j > 0 and stop == False:
+            if end_result[i][j] in end_result[i-1]:
+                end_result[i].pop(j)
+                j -= 1
+            else :
+                stop = True
+
+def remove_end_recoverage2(end_results):
+    for i in range(1, len(end_result)):
+        stop = False
+        while stop == False:
+            if end_result[i][-1] in end_result[i-1]:
+                end_result[i].pop(-1)
+            else :
+                stop = True
+    
+def merge_end_result(end_result):
+    res = []
+    for liste in end_result :
+        res += liste
+    return res
 
 t1 = time.time()
 
 firefox_options = Options()
-firefox_options.add_argument("-headless")
+# firefox_options.add_argument("-headless")
 
 display = False
 file = True
@@ -66,127 +119,85 @@ driver.get("https://mondossierweb.insa-lyon.fr/mondossierweb/inscriptions?contin
 # button = driver.find_elements(By.TAG_NAME, "vaadin-button")
 time.sleep(5)
 
-buttons = driver.find_elements(By.XPATH, "//vaadin-button[text()='Notes et résultats']")
+# a = input("wait")
+
+buttons = []
+
+while buttons == []:
+    buttons = driver.find_elements(By.XPATH, "//vaadin-button[text()='Notes et résultats']")
+    time.sleep(2)
 # button = driver.find_elements(By.XPATH, "/html/body/vaadin-app-layout/vaadin-vertical-layout[2]/vaadin-vertical-layout/vaadin-vertical-layout[1]/vaadin-vertical-layout/vaadin-vertical-layout/div[2]/div[2]/vaadin-button")
 
 buttons[0].click()
 
-
-
-dic = {}
     
-matiere, note, level = None, None, None
- 
-passes = set()
-passes_ue = set()
 
-cell_list_1 = []
-cell_list_2 = []
 
-while cell_list_1 == [] or cell_list_1 != cell_list_2 :
-    cell_list_1 = cell_list_2.copy()
-    cell_list_2 = []
+end_result = []
+
+old_text = "empty"
+new_text = ""
+
+while old_text != new_text :
+    old_text = new_text
+    g = []
     
     time.sleep(1)
-    cells = driver.find_elements(By.TAG_NAME, "vaadin-grid-cell-content")
+    new_text = driver.find_element(By.TAG_NAME, "body").get_attribute("innerHTML")
     time.sleep(1)
     
-    for i in range(len(cells)):
-        cell = cells[i]
-        cell_list_2.append(cell.text)
-        if len(cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")) > 0 :
-            matiere, level, note = "", "", None
-            level = cell.find_elements(By.TAG_NAME, "vaadin-grid-tree-toggle")[0].value_of_css_property("---level")
-            if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-                matiere = cell.find_elements(By.TAG_NAME, "div")[1].text
-        else :
-            note = None
-            if len(cell.find_elements(By.TAG_NAME, "div")) > 0 :
-                note = cell.find_elements(By.TAG_NAME, "div")[-1].text
-                if note in {'Aucun résultat', '', None}:
-                    note = 'Aucun résultat'
-                else :
-                    note = float(note[:-3])
-        if matiere is not None and note is not None:
-            if matiere not in passes:
-                if display :
-                    print("Level : " + level + " / Matiere : " + matiere + " / Note : " + str(note))
-                if file :
-                    if level == "1": # semestre
-                        passes.add(matiere)
-                        dic[matiere] = {"level": level, "note": note}
-                        semestre = matiere
-                        passes_ue.clear()
-                        if semestre == "2ème semestre" :
-                            passes_ue.add("Physique et Chimie")
-                    elif level == "3" and (matiere not in passes_ue or len(dic[semestre].get(matiere, [])) == 2): # UE
-                        passes_ue.add(matiere)
-                        if semestre in dic.keys():
-                            dic[semestre][matiere] = {"level": level, "note": note}
-                            ue = matiere
-                    elif level == "4": # EC
-                        passes.add(matiere)
-                        if semestre in dic.keys() and ue in dic[semestre].keys():
-                            dic[semestre][ue][matiere] = {"level": level, "note": note}
-                            ec = matiere
-                    elif level == "5": # Eval
-                        passes.add(matiere)
-                        if semestre in dic.keys() and ue in dic[semestre].keys() and ec in dic[semestre][ue].keys():
-                            dic[semestre][ue][ec][matiere] = {"level": level, "note": note}
-                        
-    list_element = driver.find_element(By.XPATH, "/html/body/vaadin-dialog-overlay/div/vaadin-vertical-layout/vaadin-grid")
+    lines = new_text.split('style="---level: ')
+    lines.pop(0)
+    
+    for el in lines :
+        level = el[0]
+        title =  re.findall('(?<=<div style="white-space: normal; flex-grow: 1;">).*?(?=<\/div>)', el)[0]
+        note = re.findall('(?<=<div style="margin: auto; font-size: smaller; font-style: italic;">).*?(?=<\/div>)|(?<=<div style="margin: 0.1em auto 0.1em 1em; width: 5em; height: 1.5em;">).*?(?=\/20<\/div>)', el)[0]
+        g.append([level, title, note])
+    
+    end_result.append(g)
+    
+    # list_element = driver.find_element(By.XPATH, "/html/body/vaadin-dialog-overlay/div/vaadin-vertical-layout/vaadin-grid")
+    list_element = driver.find_element(By.TAG_NAME, "vaadin-grid")
     
     ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
     ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
-    ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
+    # ActionChains(driver).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).scroll_from_origin(ScrollOrigin(list_element, 10, 10), 0, 100000).perform()
     
     time.sleep(2)
                 
 time.sleep(1)
 driver.close()
 
-def trouver_differences(dic1, dic2, parent_keys=None):
-    if parent_keys is None:
-        parent_keys = []
+remove_doublons(end_result)
+remove_end_recoverage(end_result)
+remove_beginning_recoverage(end_result)
 
+final_result = merge_end_result(end_result)
+
+def find_path(notes, indice):
+    path = []
+    i = indice
+    level = int(notes[i][0])
+    lowest = level # + 1 # pour inclure la matiere dans le path
+    while i > 0 and level != 0 :
+        level = int(notes[i][0])
+        if level < lowest:
+            path.insert(0, notes[i][1])
+            lowest = level
+        i -= 1
+    return path
+
+def trouver_differences(old_notes, new_notes):
+    length = min(len(old_notes), len(new_notes))
     differences = []
-
-    for key in dic1:
-        if key in dic2:
-            if isinstance(dic1[key], dict) and isinstance(dic2[key], dict):
-                sub_differences = trouver_differences(dic1[key], dic2[key], parent_keys + [key])
-                differences.extend(sub_differences)
-            elif key == "note" and dic1[key] != dic2[key]:
-                difference = {
-                    "semestre": parent_keys[0] if parent_keys else None,
-                    "ue": parent_keys[1] if len(parent_keys) > 1 else None,
-                    "matiere": parent_keys[-1],
-                    "old": dic1[key],
-                    "new": dic2[key],
-                }
-                differences.append(difference)
-        else:
-            difference = {
-                "semestre": parent_keys[0] if parent_keys else None,
-                "ue": parent_keys[1] if len(parent_keys) > 1 else None,
-                "matiere": parent_keys[-1],
-                "old": dic1[key] if key in dic1 else None,
-                "new": dic2[key] if key in dic2 else None,
-            }
-            differences.append(difference)
-
-    for key in dic2:
-        if key not in dic1:
-            difference = {
-                "semestre": parent_keys[0] if parent_keys else None,
-                "ue": parent_keys[1] if len(parent_keys) > 1 else None,
-                "matiere": key,
-                "old": None,
-                "new": dic2[key],
-            }
-            differences.append(difference)
-
+    for i in range(length):
+        if old_notes[i] != new_notes[i]:
+            differences.append({"matiere": old_notes[i][1], "path": find_path(new_notes, i), "old": old_notes[i][2], "new": new_notes[i][2]})
     return differences
+
+
+### FTP
 
 # connect to the FTP server
 ftp = ftplib.FTP(FTP_HOST, FTP_USER, FTP_PASS)
@@ -195,7 +206,7 @@ ftp.encoding = "utf-8"
 
 ftp.sendcmd(f"CWD {FTP_DIR}")
 
-filename = "notes.json"
+filename = "string.json"
 with open(filename, "wb") as file:
     # use FTP's RETR command to download the file
     ftp.retrbinary(f"RETR {filename}", file.write)
@@ -203,26 +214,28 @@ with open(filename, "wb") as file:
 with open(filename, 'r') as f :
     old = json.load(f)
     
-if dic != old:
+if final_result != old:
     with open(filename, 'w') as f :
-        json.dump(dic, f)
+        json.dump(final_result, f)
     with open(filename, "rb") as file:
         # use FTP's STOR command to upload the file
         ftp.storbinary(f"STOR {filename}", file)
     print("diff")
-    d = trouver_differences(old, dic)
+    d = trouver_differences(old, final_result)
     print(d)
     for el in d :
-        if int(el["new"]["note"]) >= 12 : tag, news = "green_book", "Cool !"
-        elif int(el["new"]["note"]) >= 9 : tag, news = "blue_book", "Ok..."
-        else : tag, news = "orange_book", "Pas dingue"
-        r = requests.post(f"https://ntfy.sh/{subject}", data=f"{news}\n\n\n{el['matiere']} : {el['new']}".encode(encoding='utf-8'), headers={"Title": "Nouvelle note", "Tags": tag, "Priority": "2", "Actions": "view, PDF, {PDF_URL}, clear=true"})
+        try :
+            if float(el["new"]) >= 12 : tag, news = "green_book", "Cool !"
+            elif float(el["new"]) >= 9 : tag, news = "blue_book", "Ok..."
+            else : tag, news = "orange_book", "Pas dingue"
+        except :
+            tag, news = "grey_question", "Pas d'info"
+        r = requests.post(f"https://ntfy.sh/{subject}", data=f"{news}\n\n\n{el['matiere']} : {el['new']}".encode(encoding='utf-8'), headers={"Title": "Nouvelle note", "Tags": tag, "Priority": "2", "Actions": f"view, PDF, {PDF_URL}, clear=true"})
         if r.status_code == "200":
             print("Notified!")
 else :
     print("no diff")
 
+t2 = time.time()
 
-print()
-print("Code ran in ", end="")
-print(time.time() - t1)
+print(f"Code ran in {t2 - t1} seconds")
