@@ -90,14 +90,18 @@ display = False
 file = True
 
 ### INIT
+counter = 1
 initiated = False
-while not initiated:
+while not initiated and counter < 5:
     try:
-        driver = webdriver.Firefox(options=firefox_options)
+        driver = webdriver.Firefox()
         initiated = True
     except:
-        print("Couldn't start browser, trying again...")
+        print(f"Couldn't start browser, trying again... ({counter})")
+        counter += 1
         time.sleep(1)
+if counter == 5 :
+    raise Exception("Couldn't start browser after 5 attempts, exiting program...")
 # driver.set_window_size(1920,2000)
 
 ### AUTH
