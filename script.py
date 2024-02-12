@@ -90,7 +90,14 @@ display = False
 file = True
 
 ### INIT
-driver = webdriver.Firefox(options=firefox_options)
+initiated = False
+while not initiated:
+    try:
+        driver = webdriver.Firefox(options=firefox_options)
+        initiated = True
+    except:
+        print("Couldn't start browser, trying again...")
+        time.sleep(1)
 # driver.set_window_size(1920,2000)
 
 ### AUTH
