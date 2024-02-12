@@ -233,7 +233,7 @@ if final_result != old:
         ftp.storbinary(f"STOR {filename}", file)
     print("diff")
     d = trouver_differences(old, final_result)
-    print(d)
+    # print(d)
     for el in d :
         try :
             if float(el["new"]) >= 12 : tag, news = "green_book", "Cool !"
