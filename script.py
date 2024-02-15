@@ -200,11 +200,15 @@ def find_path(notes, indice):
     return path
 
 def trouver_differences(old_notes, new_notes):
-    length = min(len(old_notes), len(new_notes))
     differences = []
-    for i in range(length):
+    while(len(old_notes) < len(new_notes)):
+        for i in range(len(new_notes)):
+            if new_notes[i] not in old_notes:
+                differences.append({"matiere": new_notes[i][1], "path": find_path(new_notes, i), "old": None, "new": new_notes[i][2]})
+                old_notes.insert(i, new_notes[i])
+    for i in range(len(new_notes)):
         if old_notes[i] != new_notes[i]:
-            differences.append({"matiere": old_notes[i][1], "path": find_path(new_notes, i), "old": old_notes[i][2], "new": new_notes[i][2]})
+            differences.append({"matiere": new_notes[i][1], "path": find_path(new_notes, i), "old": old_notes[i][2], "new": new_notes[i][2]})
     return differences
 
 
